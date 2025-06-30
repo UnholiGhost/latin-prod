@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlashCard Master</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1e1e2e 0%, #2d1b69 100%);
+        color: #ffffff;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .app {
+        max-width: 600px;
+        width: 100%;
+        padding: 20px;
+      }
+
+      .side-controls {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        z-index: 1000;
+      }
+
+      .left-controls {
+        position: fixed;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        z-index: 1000;
+      }
+
+      .side-btn {
+        padding: 12px 16px;
+        border: none;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 140px;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .side-btn-save {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+      }
+
+      .side-btn-load {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+      }
+
+      .side-btn-download {
+        background: linear-gradient(45deg, #f093fb, #f5576c);
+        color: white;
+      }
+
+      .side-btn-delete {
+        background: linear-gradient(45deg, #ff4757, #c44569);
+        color: white;
+        border: 2px solid rgba(255, 71, 87, 0.5);
+      }
+
+      .side-btn:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .side-btn-delete:hover {
+        background: linear-gradient(45deg, #ff3742, #b33a56);
+        border-color: rgba(255, 55, 66, 0.8);
+      }
+
+      .side-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        z-index: 1001;
+        transition: all 0.3s ease;
+      }
+
+      .notification.success {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+      }
+
+      .notification.error {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+      }
+
+      .notification.info {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: #b8b8d1;
+        font-size: 1.1rem;
+      }
+
+      .upload-section {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+      }
+
+      .file-input {
+        width: 100%;
+        padding: 15px;
+        border: 2px dashed #4ecdc4;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .file-input:hover {
+        border-color: #ff6b6b;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+        color: white;
+        margin-top: 15px;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+
+      .game-section {
+        text-align: center;
+      }
+
+      .progress-bar {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        height: 8px;
+        margin-bottom: 30px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+      }
+
+      .progress-text {
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        color: #b8b8d1;
+      }
+
+      .flashcard-container {
+        perspective: 1000px;
+        margin-bottom: 30px;
+      }
+
+      .flashcard {
+        width: 100%;
+        height: 300px;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.4s ease;
+        cursor: pointer;
+      }
+
+      .flashcard.flipped {
+        transform: rotateY(180deg);
+      }
+
+      .flashcard-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        padding: 30px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .flashcard-front {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .flashcard-back {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        transform: rotateY(180deg);
+      }
+
+      .controls {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-bottom: 30px;
+      }
+
+      .btn-learn {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+        padding: 15px 25px;
+        font-size: 1.1rem;
+      }
+
+      .btn-again {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+        padding: 15px 25px;
+        font-size: 1.1rem;
+      }
+
+      .management-controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+      }
+
+      .completion-message {
+        background: linear-gradient(135deg, #4ecdc4, #44a08d);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .completion-title {
+        font-size: 2rem;
+        margin-bottom: 15px;
+      }
+
+      .fade-enter-active,
+      .fade-leave-active {
+        transition: opacity 0.2s ease;
+      }
+
+      .fade-enter-from,
+      .fade-leave-to {
+        opacity: 0;
+      }
+
+      .slide-enter-active,
+      .slide-leave-active {
+        transition: all 0.15s ease;
+      }
+
+      .slide-enter-from {
+        transform: translateX(-30px);
+        opacity: 0;
+      }
+
+      .slide-leave-to {
+        transform: translateX(30px);
+        opacity: 0;
+      }
+
+      .notification-enter-active {
+        transition: all 0.3s ease;
+      }
+
+      .notification-leave-active {
+        transition: all 0.3s ease;
+      }
+
+      .notification-enter-from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      .notification-leave-to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      @media (max-width: 1024px) {
+        .side-controls,
+        .left-controls {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          flex-direction: row;
+          flex-wrap: wrap;
+          justify-content: center;
+          top: auto;
+          right: auto;
+          gap: 8px;
+          max-width: 95vw;
+        }
+
+        .left-controls {
+          bottom: 80px;
+        }
+
+        .side-btn {
+          min-width: 90px;
+          font-size: 0.7rem;
+          padding: 8px 10px;
+          gap: 4px;
+        }
+
+        .controls {
+          flex-direction: column;
+          margin-bottom: 100px;
+        }
+
+        .management-controls {
+          flex-direction: column;
+          margin-bottom: 160px;
+        }
+
+        .title {
+          font-size: 2rem;
+        }
+
+        .flashcard {
+          height: 250px;
+        }
+
+        .flashcard-face {
+          font-size: 1.2rem;
+          padding: 20px;
+        }
+
+        .notification {
+          top: 20px;
+          left: 20px;
+          right: 20px;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Right Side Controls (Save/Load/Download) -->
+      <div class="side-controls">
+        <button
+          @click="saveProgress"
+          :disabled="!hasValidData"
+          class="side-btn side-btn-save"
+          :style="{ opacity: hasValidData ? 1 : 0.3 }"
+        >
+          💾 Save
+        </button>
+        <button
+          @click="loadProgress"
+          :disabled="!hasSavedData"
+          class="side-btn side-btn-load"
+          :style="{ opacity: hasSavedData ? 1 : 0.3 }"
+        >
+          📂 Load
+        </button>
+        <button
+          @click="downloadJson"
+          :disabled="!hasValidData"
+          class="side-btn side-btn-download"
+          :style="{ opacity: hasValidData ? 1 : 0.3 }"
+        >
+          📥 Download
+        </button>
+      </div>
+
+      <!-- Left Side Controls (Danger Zone - Delete) -->
+      <div class="left-controls">
+        <button
+          @click="deleteCurrentCard"
+          :disabled="!currentCard || allLearned"
+          class="side-btn side-btn-delete"
+          :style="{ opacity: (currentCard && !allLearned) ? 1 : 0.3 }"
+        >
+          ⚠️ Delete Card
+        </button>
+      </div>
+
+      <!-- Notification -->
+      <transition name="notification">
+        <div
+          v-if="notification.show"
+          :class="['notification', notification.type]"
+        >
+          {{ notification.message }}
+        </div>
+      </transition>
+
+      <div class="app">
+        <header class="header">
+          <h1 class="title">FlashCard Master</h1>
+          <p class="subtitle">Learn languages with interactive flashcards</p>
+        </header>
+
+        <!-- Upload Section -->
+        <div v-if="!gameStarted" class="upload-section">
+          <input
+            type="file"
+            @change="handleFileUpload"
+            accept=".json"
+            class="file-input"
+            placeholder="Select JSON file with your flashcards..."
+          />
+          <button
+            @click="startGame"
+            :disabled="!hasValidData"
+            class="btn btn-primary"
+            :style="{ opacity: hasValidData ? 1 : 0.5 }"
+          >
+            🚀 Start Learning
+          </button>
+          <div
+            v-if="errorMessage"
+            style="color: #ff6b6b; margin-top: 15px; text-align: center;"
+          >
+            {{ errorMessage }}
+          </div>
+          <div
+            v-if="hasValidData"
+            style="color: #4ecdc4; margin-top: 15px; text-align: center;"
+          >
+            ✅ Loaded {{ totalCards }} flashcards successfully!
+          </div>
+          <div
+            v-if="hasSavedData && !hasValidData"
+            style="color: #667eea; margin-top: 15px; text-align: center;"
+          >
+            💡 You have saved progress available - click "Load Progress" to
+            continue
+          </div>
+        </div>
+
+        <!-- Game Section -->
+        <div v-if="gameStarted" class="game-section">
+          <!-- Progress -->
+          <div class="progress-text">
+            Progress: {{ learnedCount }} / {{ totalCards }} cards learned
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              :style="{ width: progressPercentage + '%' }"
+            ></div>
+          </div>
+
+          <!-- Completion Message -->
+          <transition name="fade">
+            <div v-if="allLearned" class="completion-message">
+              <div class="completion-title">🎉 Congratulations!</div>
+              <p>You've learned all the flashcards! Great job!</p>
+            </div>
+          </transition>
+
+          <!-- Flashcard -->
+          <transition name="slide" mode="out-in">
+            <div
+              v-if="currentCard && !allLearned"
+              :key="currentCardKey"
+              class="flashcard-container"
+            >
+              <div
+                class="flashcard"
+                :class="{ flipped: isFlipped }"
+                @click="flipCard"
+              >
+                <div class="flashcard-face flashcard-front">
+                  {{ currentCard.word }}
+                </div>
+                <div class="flashcard-face flashcard-back">
+                  {{ currentCard.meaning }}
+                </div>
+              </div>
+            </div>
+          </transition>
+
+          <!-- Main Learning Controls -->
+          <div v-if="currentCard && !allLearned" class="controls">
+            <button @click="markAsLearned" class="btn btn-learn">
+              ✅ Learned
+            </button>
+            <button @click="markAsNotLearned" class="btn btn-again">
+              🔄 Study Again
+            </button>
+          </div>
+
+          <!-- Management Controls -->
+          <div class="management-controls">
+            <button @click="resetAllCards" class="btn btn-secondary">
+              🔄 Mark All as Unlearned
+            </button>
+            <button @click="clearData" class="btn btn-secondary">
+              🗑️ Clear All Data
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp } = Vue;
+
+      createApp({
+        data() {
+          return {
+            flashcards: [],
+            gameStarted: false,
+            currentCard: null,
+            currentCardKey: 0,
+            isFlipped: false,
+            errorMessage: '',
+            notification: {
+              show: false,
+              message: '',
+              type: 'success'
+            }
+          };
+        },
+        computed: {
+          hasValidData() {
+            return this.flashcards.length > 0;
+          },
+          totalCards() {
+            return this.flashcards.length;
+          },
+          learnedCount() {
+            return this.flashcards.filter(card => card.learned).length;
+          },
+          unlearnedCards() {
+            return this.flashcards.filter(card => !card.learned);
+          },
+          progressPercentage() {
+            return this.totalCards > 0
+              ? (this.learnedCount / this.totalCards) * 100
+              : 0;
+          },
+          allLearned() {
+            return (
+              this.gameStarted &&
+              this.totalCards > 0 &&
+              this.learnedCount === this.totalCards
+            );
+          },
+          hasSavedData() {
+            return localStorage.getItem('flashcard_progress') !== null;
+          }
+        },
+        mounted() {
+          // Auto-load if there's saved data but no current data
+          if (this.hasSavedData && !this.hasValidData) {
+            this.showNotification('You have saved progress available!', 'info');
+          }
+        },
+        methods: {
+          showNotification(message, type = 'success') {
+            this.notification = {
+              show: true,
+              message,
+              type
+            };
+            setTimeout(() => {
+              this.notification.show = false;
+            }, 3000);
+          },
+
+          saveProgress() {
+            if (!this.hasValidData) return;
+
+            const progressData = {
+              flashcards: this.flashcards,
+              gameStarted: this.gameStarted,
+              timestamp: new Date().toISOString()
+            };
+
+            try {
+              localStorage.setItem(
+                'flashcard_progress',
+                JSON.stringify(progressData)
+              );
+              this.showNotification(
+                'Progress saved successfully! 💾',
+                'success'
+              );
+            } catch (error) {
+              this.showNotification(
+                'Failed to save progress. Storage might be full.',
+                'error'
+              );
+            }
+          },
+
+          loadProgress() {
+            try {
+              const savedData = localStorage.getItem('flashcard_progress');
+              if (!savedData) {
+                this.showNotification('No saved progress found.', 'error');
+                return;
+              }
+
+              const progressData = JSON.parse(savedData);
+              this.flashcards = progressData.flashcards || [];
+              this.gameStarted = progressData.gameStarted || false;
+              this.errorMessage = '';
+
+              if (this.gameStarted && this.unlearnedCards.length > 0) {
+                this.selectRandomCard();
+              }
+
+              const saveDate = new Date(
+                progressData.timestamp
+              ).toLocaleDateString();
+              this.showNotification(
+                `Progress loaded from ${saveDate}! 📂`,
+                'success'
+              );
+            } catch (error) {
+              this.showNotification(
+                'Failed to load progress. Data might be corrupted.',
+                'error'
+              );
+            }
+          },
+
+          downloadJson() {
+            if (!this.hasValidData) return;
+
+            // Create JSON data in object format (word => meaning)
+            const jsonData = {};
+            this.flashcards.forEach(card => {
+              jsonData[card.word] = card.meaning;
+            });
+
+            // Create and download file
+            const dataStr = JSON.stringify(jsonData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `flashcards_${
+              new Date().toISOString().split('T')[0]
+            }.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            this.showNotification(
+              `Downloaded ${this.totalCards} flashcards! 📥`,
+              'success'
+            );
+          },
+
+          deleteCurrentCard() {
+            if (!this.currentCard) return;
+
+            const cardIndex = this.flashcards.findIndex(
+              card => card.id === this.currentCard.id
+            );
+
+            if (cardIndex !== -1) {
+              const deletedWord = this.currentCard.word;
+              this.flashcards.splice(cardIndex, 1);
+
+              // If no cards left, end the game
+              if (this.flashcards.length === 0) {
+                this.gameStarted = false;
+                this.currentCard = null;
+                this.showNotification(
+                  'All cards deleted! Upload new cards to continue.',
+                  'info'
+                );
+              }
+              // If no unlearned cards left, show completion
+              else if (this.unlearnedCards.length === 0) {
+                this.currentCard = null;
+                this.showNotification(
+                  `Card "${deletedWord}" deleted! 🗑️`,
+                  'success'
+                );
+              }
+              // Continue with next card
+              else {
+                this.selectRandomCard();
+                this.showNotification(
+                  `Card "${deletedWord}" deleted! 🗑️`,
+                  'success'
+                );
+              }
+            }
+          },
+
+          handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            this.errorMessage = '';
+            const reader = new FileReader();
+
+            reader.onload = e => {
+              try {
+                const jsonData = JSON.parse(e.target.result);
+                this.processJsonData(jsonData);
+              } catch (error) {
+                this.errorMessage =
+                  'Invalid JSON file. Please check the format.';
+              }
+            };
+
+            reader.readAsText(file);
+          },
+
+          processJsonData(data) {
+            if (Array.isArray(data)) {
+              // Handle array format
+              this.flashcards = data.map((item, index) => ({
+                id: index,
+                word: item.word || item.question || Object.keys(item)[0] || '',
+                meaning:
+                  item.meaning || item.answer || Object.values(item)[0] || '',
+                learned: false
+              }));
+            } else if (typeof data === 'object') {
+              // Handle object format (key-value pairs)
+              this.flashcards = Object.entries(data).map(
+                ([word, meaning], index) => ({
+                  id: index,
+                  word: word,
+                  meaning: meaning,
+                  learned: false
+                })
+              );
+            } else {
+              this.errorMessage =
+                'Unsupported JSON format. Please use an array or object format.';
+              return;
+            }
+
+            if (this.flashcards.length === 0) {
+              this.errorMessage = 'No valid flashcards found in the JSON file.';
+            } else {
+              this.errorMessage = '';
+            }
+          },
+
+          startGame() {
+            if (!this.hasValidData) return;
+            this.gameStarted = true;
+            this.selectRandomCard();
+          },
+
+          selectRandomCard() {
+            if (this.unlearnedCards.length === 0) return;
+
+            const randomIndex = Math.floor(
+              Math.random() * this.unlearnedCards.length
+            );
+            this.currentCard = this.unlearnedCards[randomIndex];
+            this.currentCardKey += 1; // Force re-render for animation
+            this.isFlipped = false;
+          },
+
+          flipCard() {
+            this.isFlipped = !this.isFlipped;
+          },
+
+          markAsLearned() {
+            if (this.currentCard) {
+              this.currentCard.learned = true;
+              this.nextCard();
+            }
+          },
+
+          markAsNotLearned() {
+            this.nextCard();
+          },
+
+          nextCard() {
+            setTimeout(() => {
+              this.selectRandomCard();
+            }, 50); // Much faster transition
+          },
+
+          resetAllCards() {
+            this.flashcards.forEach(card => {
+              card.learned = false;
+            });
+            this.selectRandomCard();
+            this.showNotification('All cards marked as unlearned! 🔄', 'info');
+          },
+
+          clearData() {
+            this.flashcards = [];
+            this.gameStarted = false;
+            this.currentCard = null;
+            this.currentCardKey = 0;
+            this.isFlipped = false;
+            this.errorMessage = '';
+
+            // Also clear localStorage
+            localStorage.removeItem('flashcard_progress');
+            this.showNotification('All data cleared! 🗑️', 'info');
+          }
+        }
+      }).mount('#app');
+    </script>
+  </body>
+</html>
